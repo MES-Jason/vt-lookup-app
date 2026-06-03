@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MES VirusTotal Lookup</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e5e5;
+    padding: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .vt-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .vt-logo {
+    width: 36px;
+    height: 36px;
+    background: #394EFF;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .vt-logo i { color: white; font-size: 20px; }
+
+  .vt-title { font-size: 18px; font-weight: 600; color: #111; }
+  .vt-subtitle { font-size: 13px; color: #666; margin-top: 1px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .api-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  input[type="text"], input[type="password"] {
+    flex: 1;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    background: #fafafa;
+    color: #111;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: #394EFF;
+    background: #fff;
+  }
+
+  .btn {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #333;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: #f5f5f5; border-color: #bbb; }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: #394EFF;
+    border-color: #394EFF;
+    color: white;
+  }
+
+  .btn-primary:hover { background: #2c3fd4; border-color: #2c3fd4; }
+  .btn-primary:disabled { background: #e5e5e5; border-color: #e5e5e5; color: #999; cursor: not-allowed; transform: none; }
+
+  .api-saved {
+    font-size: 12px;
+    color: #16a34a;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .divider { border: none; border-top: 1px solid #eee; margin: 1.25rem 0; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 1.25rem;
+  }
+
+  .tab {
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+  }
+
+  .tab.active { color: #394EFF; border-bottom-color: #394EFF; font-weight: 600; }
+  .tab:hover:not(.active) { color: #111; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+  }
+
+  .warning-note {
+    font-size: 12px;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .drop-zone {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    margin-bottom: 1rem;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    background: #f9f9ff;
+    border-color: #394EFF;
+  }
+
+  .drop-zone p { font-size: 13px; color: #666; margin-top: 8px; }
+  .drop-zone .file-name { font-size: 13px; color: #111; font-weight: 500; margin-top: 6px; }
+
+  #file-input { display: none; }
+
+  .spinner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #666;
+    margin-top: 1rem;
+  }
+
+  .spin {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ddd;
+    border-top-color: #394EFF;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .poll-msg {
+    font-size: 12px;
+    color: #666;
+    margin-top: 6px;
+    display: none;
+  }
+
+  .err-msg {
+    font-size: 13px;
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .result-card {
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 1.25rem;
+    background: #fff;
+    margin-top: 1rem;
+  }
+
+  .result-verdict {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .verdict-badge {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .v-clean    { background: #dcfce7; color: #15803d; }
+  .v-malicious{ background: #fee2e2; color: #b91c1c; }
+  .v-suspicious{ background: #fef9c3; color: #a16207; }
+  .v-unknown  { background: #f3f4f6; color: #4b5563; }
+
+  .verdict-name { font-size: 15px; font-weight: 500; color: #111; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .stat-box {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .stat-num { font-size: 22px; font-weight: 600; color: #111; }
+  .stat-num.red    { color: #dc2626; }
+  .stat-num.yellow { color: #d97706; }
+  .stat-num.green  { color: #16a34a; }
+  .stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+    font-size: 13px;
+  }
+
+  .detail-row {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+
+  .detail-val { color: #111; word-break: break-all; }
+
+  .vt-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #394EFF;
+    text-decoration: none;
+    margin-top: 12px;
+  }
+
+  .vt-link:hover { text-decoration: underline; }
+
+  .engines-toggle {
+    font-size: 12px;
+    color: #394EFF;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+    margin-top: 10px;
+    display: block;
+  }
+
+  .engines-toggle:hover { text-decoration: underline; }
+
+  .engine-list {
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 0 10px;
+  }
+
+  .engine-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+  }
+
+  .engine-item:last-child { border-bottom: none; }
+  .engine-name { color: #555; }
+  .engine-result { font-weight: 600; }
+  .engine-result.malicious  { color: #dc2626; }
+  .engine-result.suspicious { color: #d97706; }
+  .engine-result.clean      { color: #16a34a; }
+
+  .footer {
+    margin-top: 1.5rem;
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="card">
+
+    <div class="vt-header">
+      <div class="vt-logo"><i class="ti ti-shield-search"></i></div>
+      <div>
+        <div class="vt-title">VirusTotal Lookup</div>
+        <div class="vt-subtitle">MES Helpdesk — threat intelligence for active tickets</div>
+      </div>
+    </div>
+
+    <div class="section-label">API Key</div>
+    <div class="api-row">
+      <input type="password" id="api-key" placeholder="Paste your VirusTotal API key here" autocomplete="off" />
+      <button class="btn" onclick="saveKey()"><i class="ti ti-lock"></i> Save key</button>
+    </div>
+    <div class="api-saved" id="api-saved"><i class="ti ti-circle-check"></i> Key saved for this session</div>
+
+    <hr class="divider" />
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('hash')"><i class="ti ti-file-shredder"></i> Hash</button>
+      <button class="tab" onclick="switchTab('url')"><i class="ti ti-link"></i> URL / Domain</button>
+      <button class="tab" onclick="switchTab('ip')"><i class="ti ti-network"></i> IP address</button>
+      <button class="tab" onclick="switchTab('file')"><i class="ti ti-upload"></i> File upload</button>
+    </div>
+
+    <!-- Hash Panel -->
+    <div id="panel-hash" class="panel active">
+      <div class="input-row">
+        <input type="text" id="hash-input" placeholder="MD5, SHA-1, or SHA-256 hash" />
+        <button class="btn btn-primary" onclick="lookupHash()"><i class="ti ti-search"></i> Scan</button>
+      </div>
+    </div>
+
+    <!-- URL Panel -->
+    <div id="panel-url" class="panel">
+      <div class="input-row" style="margin-top:0;">
+        <input type="text" id="url-input" placeholder="https://example.com or domain.com" />
+        <button class="btn btn-primary" onclick="lookupURL()"><i class="ti ti-search"></i> Scan</button>
+      </div>
+      <div class="warning-note"><i class="ti ti-alert-triangle"></i><span>URL scans submit the address to VirusTotal. Do not use for internal or confidential URLs.</span></div>
+    </div>
+
+    <!-- IP Panel -->
+    <div id="panel-ip" class="panel">
+      <div class="input-row" style="margin-top:0;">
+        <input type="text" id="ip-input" placeholder="e.g. 198.51.100.42" />
+        <button class="btn btn-primary" onclick="lookupIP()"><i class="ti ti-search"></i> Scan</button>
+      </div>
+    </div>
+
+    <!-- File Upload Panel -->
+    <div id="panel-file" class="panel">
+      <div class="warning-note" style="margin-top:0;"><i class="ti ti-alert-triangle"></i><span>Files are uploaded to VirusTotal's servers. Do not upload files containing PII, credentials, or confidential data.</span></div>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <i class="ti ti-cloud-upload" style="font-size:32px; color:#aaa;"></i>
+        <p>Click or drag a file here to upload and scan</p>
+        <div class="file-name" id="file-name-display"></div>
+      </div>
+      <input type="file" id="file-input" onchange="onFileSelect(event)" />
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn btn-primary" id="file-scan-btn" onclick="uploadFile()" disabled><i class="ti ti-shield-search"></i> Upload &amp; scan</button>
+      </div>
+    </div>
+
+    <!-- Spinner / Status -->
+    <div class="spinner" id="spinner"><div class="spin"></div><span id="spinner-msg">Looking up...</span></div>
+    <div class="poll-msg" id="poll-msg">File submitted — polling for analysis results...</div>
+    <div class="err-msg" id="err-msg"></div>
+
+    <!-- Results -->
+    <div id="result-area"></div>
+
+  </div>
+
+  <div class="footer">MES VirusTotal Lookup &mdash; Powered by VirusTotal API v3 &mdash; Keys are session-only and never stored</div>
+</div>
+
+<script>
+  let apiKey = '';
+  let selectedFile = null;
+
+  function saveKey() {
+    const k = document.getElementById('api-key').value.trim();
+    if (!k) return;
+    apiKey = k;
+    const saved = document.getElementById('api-saved');
+    saved.style.display = 'flex';
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const tabs = ['hash','url','ip','file'];
+    tabs.forEach((t, i) => { if (t === tab) document.querySelectorAll('.tab')[i].classList.add('active'); });
+    document.getElementById('panel-' + tab).classList.add('active');
+    clearResult();
+  }
+
+  function clearResult() {
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('err-msg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('poll-msg').style.display = 'none';
+  }
+
+  function showSpinner(msg) {
+    document.getElementById('spinner').style.display = 'flex';
+    document.getElementById('spinner-msg').textContent = msg || 'Looking up...';
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('err-msg').style.display = 'none';
+    document.getElementById('poll-msg').style.display = 'none';
+  }
+
+  function showErr(msg) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('poll-msg').style.display = 'none';
+    const el = document.getElementById('err-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function getKey() {
+    const k = document.getElementById('api-key').value.trim() || apiKey;
+    if (!k) { showErr('Enter your VirusTotal API key first.'); return null; }
+    return k;
+  }
+
+  async function vtGet(path) {
+    const key = getKey();
+    if (!key) return null;
+    const res = await fetch('https://www.virustotal.com/api/v3/' + path, {
+      headers: { 'x-apikey': key }
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j?.error?.message || 'API error ' + res.status);
+    }
+    return res.json();
+  }
+
+  async function vtPost(path, body) {
+    const key = getKey();
+    if (!key) return null;
+    const res = await fetch('https://www.virustotal.com/api/v3/' + path, {
+      method: 'POST',
+      headers: { 'x-apikey': key },
+      body: body
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j?.error?.message || 'API error ' + res.status);
+    }
+    return res.json();
+  }
+
+  function renderResult(data, type) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('poll-msg').style.display = 'none';
+    const attr = data.attributes;
+    const stats = attr.last_analysis_stats || {};
+    const mal  = stats.malicious   || 0;
+    const sus  = stats.suspicious  || 0;
+    const harm = stats.harmless    || 0;
+    const undet= stats.undetected  || 0;
+    const total = mal + sus + harm + undet + (stats.timeout || 0);
+
+    let verdict, badgeClass, verdictLabel;
+    if      (mal > 0)   { verdict = 'Malicious';  badgeClass = 'v-malicious';  verdictLabel = mal + ' / ' + total + ' engines flagged'; }
+    else if (sus > 0)   { verdict = 'Suspicious'; badgeClass = 'v-suspicious'; verdictLabel = sus + ' / ' + total + ' flagged suspicious'; }
+    else if (total > 0) { verdict = 'Clean';      badgeClass = 'v-clean';      verdictLabel = '0 / ' + total + ' engines flagged'; }
+    else                { verdict = 'No data';    badgeClass = 'v-unknown';    verdictLabel = 'No analysis available'; }
+
+    let details = '';
+    if (type === 'hash') {
+      details = `
+        <div class="detail-row"><span class="detail-label">SHA-256</span><span class="detail-val">${attr.sha256 || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">MD5</span><span class="detail-val">${attr.md5 || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">File type</span><span class="detail-val">${attr.type_description || attr.type_tag || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">File size</span><span class="detail-val">${attr.size ? (attr.size / 1024).toFixed(1) + ' KB' : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">File name(s)</span><span class="detail-val">${(attr.names || []).slice(0,2).join(', ') || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">First seen</span><span class="detail-val">${attr.first_submission_date ? new Date(attr.first_submission_date * 1000).toLocaleDateString() : '—'}</span></div>
+      `;
+    } else if (type === 'url') {
+      details = `
+        <div class="detail-row"><span class="detail-label">URL</span><span class="detail-val">${attr.url || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Final URL</span><span class="detail-val">${attr.last_final_url || attr.url || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">HTTP status</span><span class="detail-val">${attr.last_http_response_code || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Page title</span><span class="detail-val">${attr.title || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Last analyzed</span><span class="detail-val">${attr.last_analysis_date ? new Date(attr.last_analysis_date * 1000).toLocaleDateString() : '—'}</span></div>
+      `;
+    } else if (type === 'ip') {
+      details = `
+        <div class="detail-row"><span class="detail-label">Country</span><span class="detail-val">${attr.country || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">ASN</span><span class="detail-val">${attr.asn ? attr.asn + ' (' + (attr.as_owner || '') + ')' : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Network</span><span class="detail-val">${attr.network || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Reputation score</span><span class="detail-val">${attr.reputation !== undefined ? attr.reputation : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Last analyzed</span><span class="detail-val">${attr.last_analysis_date ? new Date(attr.last_analysis_date * 1000).toLocaleDateString() : '—'}</span></div>
+      `;
+    }
+
+    const engines = attr.last_analysis_results || {};
+    const flagged = Object.entries(engines).filter(([, v]) => v.category === 'malicious' || v.category === 'suspicious');
+    let enginesHtml = '';
+    if (flagged.length > 0) {
+      enginesHtml = flagged.slice(0, 30).map(([name, v]) =>
+        `<div class="engine-item"><span class="engine-name">${name}</span><span class="engine-result ${v.category}">${v.result || v.category}</span></div>`
+      ).join('');
+    }
+
+    const vtBase = type === 'hash' ? 'file' : type === 'url' ? 'url' : 'ip-address';
+    const vtLink = 'https://www.virustotal.com/gui/' + vtBase + '/' + data.id;
+
+    document.getElementById('result-area').innerHTML = `
+      <div class="result-card">
+        <div class="result-verdict">
+          <span class="verdict-badge ${badgeClass}">${verdict}</span>
+          <span class="verdict-name">${verdictLabel}</span>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-num red">${mal}</div><div class="stat-label">Malicious</div></div>
+          <div class="stat-box"><div class="stat-num yellow">${sus}</div><div class="stat-label">Suspicious</div></div>
+          <div class="stat-box"><div class="stat-num green">${harm}</div><div class="stat-label">Harmless</div></div>
+          <div class="stat-box"><div class="stat-num">${undet}</div><div class="stat-label">Undetected</div></div>
+        </div>
+        <div class="detail-grid">${details}</div>
+        ${flagged.length > 0 ? `<button class="engines-toggle" onclick="toggleEngines(this)">Show flagging engines (${flagged.length})</button><div class="engine-list" id="engines-list" style="display:none;">${enginesHtml}</div>` : ''}
+        <a class="vt-link" href="${vtLink}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i> View full report on VirusTotal</a>
+      </div>
+    `;
+  }
+
+  function toggleEngines(btn) {
+    const list = document.getElementById('engines-list');
+    const shown = list.style.display !== 'none';
+    list.style.display = shown ? 'none' : 'block';
+    btn.textContent = shown
+      ? btn.textContent.replace('Hide','Show')
+      : btn.textContent.replace('Show','Hide');
+  }
+
+  async function lookupHash() {
+    const hash = document.getElementById('hash-input').value.trim();
+    if (!hash) { showErr('Enter a file hash.'); return; }
+    if (!getKey()) return;
+    showSpinner('Looking up hash...');
+    try {
+      const data = await vtGet('files/' + hash);
+      renderResult(data.data, 'hash');
+    } catch(e) { showErr(e.message); }
+  }
+
+  async function lookupURL() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) { showErr('Enter a URL or domain.'); return; }
+    if (!getKey()) return;
+    showSpinner('Scanning URL...');
+    try {
+      const id = btoa(url).replace(/=/g, '');
+      const data = await vtGet('urls/' + id);
+      renderResult(data.data, 'url');
+    } catch(e) {
+      try {
+        const fd = new FormData();
+        fd.append('url', url);
+        const sub = await vtPost('urls', fd);
+        await poll(sub.data.id, 'url');
+      } catch(e2) { showErr(e2.message); }
+    }
+  }
+
+  async function lookupIP() {
+    const ip = document.getElementById('ip-input').value.trim();
+    if (!ip) { showErr('Enter an IP address.'); return; }
+    if (!getKey()) return;
+    showSpinner('Looking up IP...');
+    try {
+      const data = await vtGet('ip_addresses/' + ip);
+      renderResult(data.data, 'ip');
+    } catch(e) { showErr(e.message); }
+  }
+
+  function onFileSelect(e) {
+    selectedFile = e.target.files[0];
+    if (selectedFile) {
+      document.getElementById('file-name-display').textContent =
+        selectedFile.name + ' (' + (selectedFile.size / 1024).toFixed(1) + ' KB)';
+      document.getElementById('file-scan-btn').disabled = false;
+    }
+  }
+
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) {
+      selectedFile = f;
+      document.getElementById('file-name-display').textContent = f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)';
+      document.getElementById('file-scan-btn').disabled = false;
+    }
+  });
+
+  async function uploadFile() {
+    if (!selectedFile) { showErr('Select a file first.'); return; }
+    if (!getKey()) return;
+    showSpinner('Uploading file...');
+    try {
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+      const sub = await vtPost('files', fd);
+      document.getElementById('poll-msg').style.display = 'block';
+      await poll(sub.data.id, 'hash');
+    } catch(e) { showErr(e.message); }
+  }
+
+  async function poll(id, type) {
+    document.getElementById('poll-msg').style.display = 'block';
+    for (let i = 0; i < 24; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      try {
+        const res = await vtGet('analyses/' + id);
+        if (res.data.attributes.status === 'completed') {
+          const metaId = res.meta?.file_info?.sha256 || res.meta?.url_info?.id || id;
+          const dataType = type === 'hash' ? 'files' : 'urls';
+          try {
+            const full = await vtGet(dataType + '/' + metaId);
+            renderResult(full.data, type);
+          } catch(_) {
+            renderResult(res.data, type);
+          }
+          return;
+        }
+      } catch(_) {}
+    }
+    showErr('Analysis is taking longer than expected. Check VirusTotal directly for results.');
+  }
+</script>
+
+</body>
+</html>
